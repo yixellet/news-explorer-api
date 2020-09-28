@@ -16,11 +16,11 @@ function passwordValidation(password) {
   return regex.test(password);
 }
 
-module.exports.getUserInfo = (req, res) => {
-  User.findById(req.params.id)
+module.exports.getUserInfo = (req, res, next) => {
+  User.findById(req.cookies.myId)
     .then((user) => {
       if (user) {
-        res.send({ data: user });
+        res.status(200).send({ data: user });
       } else {
         throw new NotFoundError('Пользователя с таким ID не существует');
       }
@@ -30,15 +30,15 @@ module.exports.getUserInfo = (req, res) => {
 
 module.exports.createUser = (req, res) => {
   const {
-    name, about, avatar, email,
+    name, email,
   } = req.body;
   if (passwordValidation(req.body.password)) {
     bcrypt.hash(req.body.password, 10)
       .then((hash) => User.create({
-        name, about, avatar, email, password: hash,
+        name, email, password: hash,
       }))
       .then((user) => res.send({
-        id: user._id, about: user.about, avatar: user.avatar, email: user.email,
+        id: user._id, email: user.email,
       }))
       .catch((err) => createUserError(req, res, err));
   } else {
@@ -51,7 +51,8 @@ module.exports.login = (req, res) => {
   User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, secretKey.secretKey, { expiresIn: '7d' });
-      res.cookie('jwt', token, { maxAge: 3600000, httpOnly: true })
+      res.cookie('jwt', token, { maxAge: 3600000, httpOnly: true });
+      res.cookie('myId', user._id)
         .end();
     })
     .catch((err) => {
