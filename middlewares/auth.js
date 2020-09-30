@@ -1,20 +1,21 @@
-const { NODE_ENV, JWT_SECRET } = process.env;
 const jwt = require('jsonwebtoken');
-const secretKey = require('../secretKey');
+
+const { JWT_SECRET } = require('../config');
 const MustAuthorizeError = require('../errors/must-authorize-error');
+const { errorMessages } = require('../messages/messages');
 
 module.exports = (req, res, next) => {
   const { authorization } = req.headers;
   if (!authorization || !authorization.startsWith('Bearer ')) {
-    const err = new MustAuthorizeError('Необходима авторизация');
+    const err = new MustAuthorizeError(errorMessages.mustAuthorize);
     next(err);
   }
   const token = authorization.replace('Bearer ', '');
   let payload;
   try {
-    payload = jwt.verify(token, NODE_ENV === 'production' ? JWT_SECRET : secretKey.secretKey);
+    payload = jwt.verify(token, JWT_SECRET);
   } catch (e) {
-    const err = new MustAuthorizeError('Необходима авторизация');
+    const err = new MustAuthorizeError(errorMessages.mustAuthorize);
     next(err);
   }
   req.user = payload;

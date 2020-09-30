@@ -2,14 +2,13 @@ const Article = require('../models/article');
 const NotFoundError = require('../errors/not-found-error');
 const CantDeleteError = require('../errors/cant-delete-error');
 const ServerError = require('../errors/server-error');
+const InvalidIdError = require('../errors/invalid-id-error');
+const { errorMessages } = require('../messages/messages');
 
 module.exports.getArticles = (req, res, next) => {
   Article.find({})
     .then((articles) => res.send({ data: articles }))
-    .catch(() => {
-      const err = new ServerError('На сервере произошла ошибка');
-      next(err);
-    });
+    .catch(next);
 };
 
 module.exports.createArticle = (req, res, next) => {
@@ -21,28 +20,29 @@ module.exports.createArticle = (req, res, next) => {
     keyword, title, text, date, source, link, image, owner,
   })
     .then((article) => res.send({ data: article }))
-    .catch(() => {
-      const err = new ServerError('На сервере произошла ошибка');
-      next(err);
-    });
+    .catch(next);
 };
 
-module.exports.deleteArticle = (req, res, next) => {
+module.exports.deleteArticle = (req, res) => {
   Article.findById(req.params.articleId)
+    .orFail(() => {
+      throw new NotFoundError(errorMessages.articleNotFound);
+    })
     .then((article) => {
       if (String(article.owner) === String(req.user._id)) {
-        Article.findByIdAndRemove(article._id)
-          .then((articl) => {
-            if (articl) {
-              res.send({ data: articl });
-            } else {
-              throw new NotFoundError('Карточки с таким ID не существует');
-            }
-          })
-          .catch(next);
+        Article.deleteOne(article)
+          .then(() => res.send({ data: article }));
       } else {
-        throw new CantDeleteError('Удалять карточки может только их владелец');
+        throw new CantDeleteError(errorMessages.cannotDelete);
       }
     })
-    .catch(next);
+    .catch((err) => {
+      if (err.kind === 'ObjectId') {
+        throw new InvalidIdError(errorMessages.invalidArticleId);
+      } else if (err.statusCode === 500) {
+        throw new ServerError(errorMessages.serverError);
+      } else {
+        res.status(err.statusCode).send({ message: err.message });
+      }
+    });
 };

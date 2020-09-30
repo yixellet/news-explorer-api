@@ -1,14 +1,18 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
 const User = require('../models/user');
-const secretKey = require('../secretKey');
+const { JWT_SECRET } = require('../config');
 const NotFoundError = require('../errors/not-found-error');
+const ServerError = require('../errors/server-error');
+const InvalidIdError = require('../errors/invalid-id-error');
+const UserExistsError = require('../errors/user-exists-error');
+const { errorMessages } = require('../messages/messages');
 
 function createUserError(req, res, err) {
   if (err.code === 11000) {
-    return res.status(409).send({ message: 'Пользователь с таким Email уже существует' });
+    throw new UserExistsError(errorMessages.userExists);
   }
-  return res.status(500).send({ message: err.message });
 }
 
 function passwordValidation(password) {
@@ -16,16 +20,21 @@ function passwordValidation(password) {
   return regex.test(password);
 }
 
-module.exports.getUserInfo = (req, res, next) => {
-  User.findById(req.cookies.myId)
-    .then((user) => {
-      if (user) {
-        res.status(200).send({ data: user });
-      } else {
-        throw new NotFoundError('Пользователя с таким ID не существует');
-      }
+module.exports.getUserInfo = (req, res) => {
+  User.findById(req.user._id)
+    .orFail(() => {
+      throw new NotFoundError(errorMessages.userNotFound);
     })
-    .catch(next);
+    .then((user) => res.status(200).send({ data: user }))
+    .catch((err) => {
+      if (err.kind === 'ObjectId') {
+        throw new InvalidIdError(errorMessages.invalidUserId);
+      } else if (err.statusCode === 500) {
+        throw new ServerError(errorMessages.serverError);
+      } else {
+        res.status(err.statusCode).send({ message: err.message });
+      }
+    });
 };
 
 module.exports.createUser = (req, res) => {
@@ -37,12 +46,12 @@ module.exports.createUser = (req, res) => {
       .then((hash) => User.create({
         name, email, password: hash,
       }))
-      .then((user) => res.send({
+      .then((user) => res.status(201).send({
         id: user._id, email: user.email,
       }))
       .catch((err) => createUserError(req, res, err));
   } else {
-    res.status(400).send({ message: 'Пароль должен содержать не менее 8 символов и состоять из цифр и латинских букв' });
+    res.status(400).send({ message: errorMessages.passwordError });
   }
 };
 
@@ -50,9 +59,8 @@ module.exports.login = (req, res) => {
   const { email, password } = req.body;
   User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, secretKey.secretKey, { expiresIn: '7d' });
-      res.cookie('jwt', token, { maxAge: 3600000, httpOnly: true });
-      res.cookie('myId', user._id)
+      const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
+      res.cookie('jwt', token, { maxAge: 3600000, httpOnly: true })
         .end();
     })
     .catch((err) => {
