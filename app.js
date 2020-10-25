@@ -21,7 +21,7 @@ mongoose.connect(DB_URL, {
 });
 
 app.use(cors({
-  origin: 'http://localhost:8080',
+  origin: 'https://yixellet.github.io',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   preflightContinue: false,
   optionsSuccessStatus: 204,
