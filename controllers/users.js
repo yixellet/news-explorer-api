@@ -49,11 +49,7 @@ module.exports.createUser = (req, res) => {
       .then((user) => res.status(201).send({
         id: user._id, email: user.email,
       }))
-      .catch((err) => {
-        if (err.code === 11000) {
-          res.status(409).send({ message: errorMessages.userExists});
-        }
-      });
+      .catch((err) => createUserError(req, res, err));
   } else {
     res.status(400).send({ message: errorMessages.passwordError });
   }
