@@ -29,6 +29,8 @@ app.use('*', cors({
     'Content-Type',
     'origin',
     'x-access-token',
+    'authorization',
+    'credentials',
   ],
   credentials: true,
 }));
