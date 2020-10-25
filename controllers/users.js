@@ -49,7 +49,11 @@ module.exports.createUser = (req, res) => {
       .then((user) => res.status(201).send({
         id: user._id, email: user.email,
       }))
-      .catch((err) => createUserError(req, res, err));
+      .catch((err) => {
+        if (err.code === 11000) {
+          res.status(409).send({ message: errorMessages.userExists});
+        }
+      });
   } else {
     res.status(400).send({ message: errorMessages.passwordError });
   }
@@ -60,7 +64,7 @@ module.exports.login = (req, res) => {
   User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
-      res.cookie('jwt', token, { maxAge: 3600000, httpOnly: true })
+      res.status(201).send({ jwt: token })
         .end();
     })
     .catch((err) => {

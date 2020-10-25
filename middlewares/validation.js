@@ -74,7 +74,7 @@ const validateArticleBody = celebrate({
         'any.required': errorMessages.required,
       }),
     image: Joi.string().required().custom((value, helpers) => {
-      if (validator.isURL(value)) {
+      if (validator.isURL(value) || value === null) {
         return value;
       }
       return helpers.message(errorMessages.link);

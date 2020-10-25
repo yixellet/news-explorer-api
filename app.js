@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
@@ -19,6 +20,20 @@ mongoose.connect(DB_URL, {
   useUnifiedTopology: true,
 });
 
+app.use(cors({
+  origin: 'http://localhost:8080',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+  allowedHeaders: [
+    'Content-Type',
+    'origin',
+    'x-access-token',
+    'authorization',
+    'credentials',
+  ],
+  credentials: true,
+}));
 app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
