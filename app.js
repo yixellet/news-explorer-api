@@ -19,7 +19,7 @@ mongoose.connect(DB_URL, {
   useFindAndModify: false,
   useUnifiedTopology: true,
 });
-/*
+
 app.use(cors({
   origin: ['https://yixellet.github.io', 'http://localhost:8080', 'https://www.kkk.students.nomoreparties.co'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -34,7 +34,6 @@ app.use(cors({
   ],
   credentials: true,
 }));
-*/
 app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
