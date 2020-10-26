@@ -5,7 +5,7 @@ const MustAuthorizeError = require('../errors/must-authorize-error');
 const { errorMessages } = require('../messages/messages');
 
 module.exports = (req, res, next) => {
-  console.log('im in auth middleware');
+  console.log(req.headers);
   const { authorization } = req.headers;
   if (!authorization || !authorization.startsWith('Bearer ')) {
     const err = new MustAuthorizeError(errorMessages.mustAuthorize);
