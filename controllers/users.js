@@ -38,6 +38,7 @@ module.exports.getUserInfo = (req, res) => {
 };
 
 module.exports.createUser = (req, res) => {
+  console.log('im in signup handler');
   const {
     name, email,
   } = req.body;
