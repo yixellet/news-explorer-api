@@ -21,7 +21,7 @@ mongoose.connect(DB_URL, {
 });
 console.log('cors');
 app.use('*', cors({
-  origin: ['https://yixellet.github.io', 'http://localhost:8080', 'https://www.kkk.students.nomoreparties.co'],
+  origin: ['https://yixellet.github.io', 'http://localhost:8080', 'https://kkk.students.nomoreparties.co', 'https://www.kkk.students.nomoreparties.co'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   preflightContinue: false,
   optionsSuccessStatus: 204,
